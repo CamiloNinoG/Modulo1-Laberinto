@@ -1,14 +1,14 @@
 {
   "matriz": {
-    "filas": 35,
-    "columnas": 40
+    "filas": 30,
+    "columnas": 30
   },
 
   "origen": 
   [0, 0],
 
   "destino":
-  [34, 39],
+  [30, 30],
 
   "agujerosNegros": [
     [3, 5],
@@ -19,7 +19,9 @@
   "estrellasGigantes": [
     [7, 7],
     [14, 14],
-    [20, 20]
+    [20, 20],
+    [10,10],
+    [25,25]
   ],
 
   "agujerosGusano": [
