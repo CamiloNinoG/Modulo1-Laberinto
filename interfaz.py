@@ -1,59 +1,48 @@
 import streamlit as st
 import json
 import os
+import time
 from laberinto_universo import resolver_laberinto
 
-
 st.set_page_config(layout="wide")
+
 # Cargar datos
 ruta_archivo = os.path.join(os.path.dirname(__file__), 'matriz_universo.json')
 with open(ruta_archivo, 'r', encoding='utf-8') as archivo:
     datos = json.load(archivo)
 
-# Dimensiones de la matriz
 filas = datos['matriz']['filas']
 columnas = datos['matriz']['columnas']
-
-# Cargar la matriz inicial de valores
 matriz_valores = datos["matrizInicial"]
-
-# Crear matriz visual con los valores por defecto
 matriz_visual = [[str(matriz_valores[i][j]) for j in range(columnas)] for i in range(filas)]
 
 # Función para sobrescribir una celda con un símbolo
 def colocar_simbolo(x, y, simbolo):
     matriz_visual[x][y] = simbolo
 
-# Origen y destino
+# Elementos fijos
 colocar_simbolo(*datos["origen"], "🛫")
 colocar_simbolo(*datos["destino"], "🛬")
 
-# Agujeros Negros
 for agujero in datos["agujerosNegros"]:
     colocar_simbolo(*agujero, "⚫")
-
-# Estrellas Gigantes
+    
 for estrella in datos["estrellasGigantes"]:
     colocar_simbolo(*estrella, "⭐")
-
-# Agujeros de Gusano
+    
 for gusano in datos["agujerosGusano"]:
     colocar_simbolo(*gusano["entrada"], "🌀")
     colocar_simbolo(*gusano["salida"], "🌀")
 
-# Zonas de Recarga
 for zona in datos["zonasRecarga"]:
     x, y, _ = zona
     colocar_simbolo(x, y, "🔋")
 
-# Celdas con carga requerida
 for celda in datos["celdasCargaRequerida"]:
     x, y = celda["coordenada"]
     colocar_simbolo(x, y, "⚡")
 
-# Mostrar en Streamlit
 st.title("Visualización de la Matriz del Universo")
-
 st.markdown("### Leyenda:")
 st.write("🛫 Origen")
 st.write("🛬 Destino")
@@ -63,46 +52,57 @@ st.write("🌀 Agujero de Gusano")
 st.write("🔋 Zona de Recarga")
 st.write("⚡ Celda con carga requerida")
 
-st.markdown("### Matriz Visual con valores:")
+# Función para generar HTML desde matriz visual
+def generar_html(ruta_coords=set()):
+    html = """
+    <style>
+        table {
+            border-collapse: collapse;
+            font-family: monospace;
+            font-size: 15px;
+        }
+        td {
+            border: 1px solid #999;
+            padding: 5px 5px;
+            text-align: center;
+            min-width: 5px;
+        }
+    </style>
+    <table>
+    """
+    for i in range(filas):
+        html += "<tr>"
+        for j in range(columnas):
+            celda = matriz_visual[i][j]
+            estilo = ""
+            if (i, j) in ruta_coords and celda == "🚀":
+                estilo = ' style="background-color: lightblue;"'
+            html += f"<td{estilo}>{celda}</td>"
+        html += "</tr>"
+    html += "</table>"
+    return html
 
-# # Mostrar cada fila con las celdas separadas
-# for fila in matriz_visual:
-#     st.write(" ||| ".join(fila))
+if st.button("🚀 Ejecutar algoritmo con animación"):
+    encontrado, ruta_coords = resolver_laberinto()
+    ruta_ordenada = list(ruta_coords)
 
-# Crear tabla HTML cuadriculada
-html = """
-<style>
-    table {
-        border-collapse: collapse;
-        font-family: monospace;
-        font-size: 15px;
-    }
-    td {
-        border: 1px solid #999;
-        padding: 5px 5px;
-        text-align: center;
-        min-width: 5px;
-    }
-</style>
-<table>
-"""
-if st.button("Ejecutar algoritmo"):
-    encontrado, ruta = resolver_laberinto()
     if encontrado:
-        for x, y in ruta:
+        espacio = st.empty()  # lugar para actualizar matriz
+        for i, (x, y) in enumerate(ruta_ordenada):
             if matriz_visual[x][y] not in ["🛫", "🛬"]:
                 colocar_simbolo(x, y, "🚀")
-        st.success("¡Ruta encontrada!")
+            html_actualizado = generar_html(set(ruta_ordenada[:i+1]))
+            espacio.markdown(html_actualizado, unsafe_allow_html=True)
+            time.sleep(0.025)  # velocidad de animación (ajusta si quieres)
+        st.success("¡Ruta animada mostrada con éxito!")
     else:
         st.error("No se encontró una ruta válida.")
+else:
+    st.markdown("### Matriz del Universo (inicial)")
+    espacio_matriz = st.empty()  # Este se reutiliza para actualizar con animación
 
-for fila in matriz_visual:
-    html += "<tr>"
-    for valor in fila:
-        html += f"<td>{valor}</td>"
-    html += "</tr>"
+    # Mostrar la matriz inicial antes de ejecutar el algoritmo
+    html_inicial = generar_html()
+    espacio_matriz.markdown(html_inicial, unsafe_allow_html=True)
 
-html += "</table>"
 
-# Mostrar la tabla en Streamlit
-st.markdown(html, unsafe_allow_html=True)

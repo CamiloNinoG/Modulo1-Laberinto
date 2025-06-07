@@ -15,24 +15,22 @@ def backtracking(laberinto, x, y, visitados, resultado, energia, energia_por_cel
     destino = laberinto['destino']
 
     if x == destino[0] and y == destino[1]:
-        print("Llegue al destino con: ")
-        print("X: ",x)
-        print("Y: ",y)
         resultado.update(visitados)
         return True
 
+    #  Evaluar limites del mapa
+    if not (0 <= x < filas and 0 <= y < columnas):
+        return False
+    
+    
     if (x, y) in visitados:
         return False
+    
     
     clave = (x, y)
     if clave in energia_por_celda and energia <= energia_por_celda[clave]:
         return False
     energia_por_celda[clave] = energia
-
-
-    # Validar límites
-    if not (0 <= x < filas and 0 <= y < columnas):
-        return False
 
     # Gasto de energía por celda
     gasto_celda = laberinto['matrizInicial'][x][y]
@@ -75,7 +73,6 @@ def backtracking(laberinto, x, y, visitados, resultado, energia, energia_por_cel
                 print(f"Recarga en {x,y}. Energía ahora: {energia}")
                 break
 
-
     visitados.add((x, y))
 
     for dx, dy in [(1,0), (-1,0), (0,1), (0,-1)]:
@@ -100,5 +97,6 @@ def resolver_laberinto():
 
 if __name__ == "__main__":
     encontrado, ruta = resolver_laberinto()
+    ruta_coords = set(ruta)
     print("¿Camino encontrado?", encontrado)
     print("Ruta: ", ruta)
