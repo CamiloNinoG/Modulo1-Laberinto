@@ -93,7 +93,7 @@ if st.button("🚀 Ejecutar algoritmo con animación"):
                 colocar_simbolo(x, y, "🚀")
             html_actualizado = generar_html(set(ruta_ordenada[:i+1]))
             espacio.markdown(html_actualizado, unsafe_allow_html=True)
-            time.sleep(0.025)  # velocidad de animación (ajusta si quieres)
+            time.sleep(0.25)  # velocidad de animación (ajusta si quieres)
         st.success("¡Ruta animada mostrada con éxito!")
     else:
         st.error("No se encontró una ruta válida.")
