@@ -9,17 +9,15 @@ with open(ruta_archivo, 'r', encoding='utf-8') as archivo:
     datos = json.load(archivo)
 
 
-# Mostrar los elementos del JSON
-print("Tamaño de la matriz:")
-print(f"  Filas: {datos['matriz']['filas']}, Columnas: {datos['matriz']['columnas']}")
-
-
-def backtracking(laberinto, x, y, visitados, resultado, energia):
+def backtracking(laberinto, x, y, visitados, resultado, energia, energia_por_celda):
     filas = laberinto['matriz']['filas']
     columnas = laberinto['matriz']['columnas']
     destino = laberinto['destino']
-    
+
     if x == destino[0] and y == destino[1]:
+        print("Llegue al destino con: ")
+        print("X: ",x)
+        print("Y: ",y)
         resultado.update(visitados)
         return True
 
@@ -64,7 +62,7 @@ def backtracking(laberinto, x, y, visitados, resultado, energia):
     for agujero in laberinto['agujerosGusano']:
         if [x, y] == agujero['entrada']:
             print(f"Agujero de gusano de {x,y} a {agujero['salida']}")
-            return backtracking(laberinto, agujero['salida'][0], agujero['salida'][1], visitados, resultado, energia)
+            return backtracking(laberinto, agujero['salida'][0], agujero['salida'][1], visitados, resultado, energia, energia_por_celda)
 
     # Recarga de energía
     # Recarga de energía (una sola vez por celda)
@@ -82,21 +80,25 @@ def backtracking(laberinto, x, y, visitados, resultado, energia):
 
     for dx, dy in [(1,0), (-1,0), (0,1), (0,-1)]:
         nx, ny = x + dx, y + dy
-        if backtracking(laberinto, nx, ny, visitados, resultado, energia):
+        if backtracking(laberinto, nx, ny, visitados, resultado, energia, energia_por_celda):
             return True
 
     visitados.remove((x, y))
     return False
 
-energia_por_celda = {}
-visitados = set()
-resultado = set()
-energia_inicial = datos['cargaInicial']
-origen = datos['origen']
+def resolver_laberinto():
+    energia_por_celda = {}
+    visitados = set()
+    resultado = set()
+    energia_inicial = datos['cargaInicial']
+    origen = datos['origen']
 
-encontrado = backtracking(datos, origen[0], origen[1], visitados, resultado, energia_inicial)
+    encontrado = backtracking(datos, origen[0], origen[1], visitados, resultado, energia_inicial, energia_por_celda)
 
-print("¿Camino encontrado?", encontrado)
-print("Ruta:")
-for paso in resultado:
-    print(paso)
+    return encontrado, resultado
+
+
+if __name__ == "__main__":
+    encontrado, ruta = resolver_laberinto()
+    print("¿Camino encontrado?", encontrado)
+    print("Ruta: ", ruta)

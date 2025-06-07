@@ -1,9 +1,12 @@
 import streamlit as st
 import json
+import os
+from laberinto_universo import resolver_laberinto
+
 
 st.set_page_config(layout="wide")
 # Cargar datos
-ruta_archivo = 'matriz_universo.json'
+ruta_archivo = os.path.join(os.path.dirname(__file__), 'matriz_universo.json')
 with open(ruta_archivo, 'r', encoding='utf-8') as archivo:
     datos = json.load(archivo)
 
@@ -83,6 +86,15 @@ html = """
 </style>
 <table>
 """
+if st.button("Ejecutar algoritmo"):
+    encontrado, ruta = resolver_laberinto()
+    if encontrado:
+        for x, y in ruta:
+            if matriz_visual[x][y] not in ["🛫", "🛬"]:
+                colocar_simbolo(x, y, "🚀")
+        st.success("¡Ruta encontrada!")
+    else:
+        st.error("No se encontró una ruta válida.")
 
 for fila in matriz_visual:
     html += "<tr>"
