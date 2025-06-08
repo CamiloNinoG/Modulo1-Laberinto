@@ -1,16 +1,16 @@
 import json
 import os
 
-# === Función: Cargar los datos del archivo JSON ===
+# Función que permite cargar los datos JSON
 def cargar_datos(ruta_archivo):
     with open(ruta_archivo, 'r', encoding='utf-8') as archivo:
         return json.load(archivo)
 
-# === Función: Verificar si una posición está dentro de la matriz ===
+# Funcion que permite validar si la ubicacion esta en los limites permitidos
 def es_valido(x, y, filas, columnas):
     return 0 <= x < filas and 0 <= y < columnas
 
-# === Función: Obtener movimientos posibles (8 direcciones) ===
+# Movimientos
 def obtener_movimientos():
     return [
         (1, 0),   # abajo
@@ -23,19 +23,16 @@ def obtener_movimientos():
         (-1, -1)  # diagonal superior izquierda
     ]
 
-# === Función: Aplicar recarga si hay una celda de recarga en la posición ===
+# Función que permite aplicar recarga si hay una celda de recarga en la posición
 def recargar_energia(x, y, energia, zonas_recarga):
     for zx, zy, factor in zonas_recarga:
         if (x, y) == (zx, zy):
             return energia + factor
     return energia
 
+# Funcion que permite obtener los vecinos adyacentes de una celda
 def obtener_vecinos_adyacentes(x, y, filas, columnas):
-    """Obtiene coordenadas adyacentes (8 direcciones) dentro de límites."""
-    movimientos = [
-        (1, 0), (-1, 0), (0, 1), (0, -1),
-        (1, 1), (1, -1), (-1, 1), (-1, -1)
-    ]
+    movimientos = obtener_movimientos()
     vecinos = []
     for dx, dy in movimientos:
         nx, ny = x + dx, y + dy
@@ -43,6 +40,7 @@ def obtener_vecinos_adyacentes(x, y, filas, columnas):
             vecinos.append((nx, ny))
     return vecinos
 
+# Funcion que permite destruir un agujero negro si estamos en una estrellaGigante
 def destruir_agujero_negro(laberinto):
     filas = laberinto['matriz']['filas']
     columnas = laberinto['matriz']['columnas']
@@ -68,16 +66,13 @@ def destruir_agujero_negro(laberinto):
 
 
 def obtener_salida_agujero_gusano(pos, agujeros_gusano_act):
-    """
-    Retorna la celda de salida del agujero de gusano si la posición actual es entrada.
-    Si no, retorna None.
-    """
     for i, agujero in enumerate(agujeros_gusano_act):
         if agujero['entrada'] == list(pos):
             return i, tuple(agujero['salida'])
     return None, None
 
 
+# Función de la logica principal del backtracking
 def backtracking(laberinto, x, y, camino, energia_actual, energia_por_celda, agujeros_negros_act, agujeros_gusano_act):
     filas = laberinto['matriz']['filas']
     columnas = laberinto['matriz']['columnas']
@@ -90,7 +85,6 @@ def backtracking(laberinto, x, y, camino, energia_actual, energia_por_celda, agu
     if (x, y) in [pos for pos, _ in camino]:
         return False
 
-    # Bloquear agujeros negros (posiciones actuales)
     if [x, y] in agujeros_negros_act:
         return False
 
@@ -105,7 +99,6 @@ def backtracking(laberinto, x, y, camino, energia_actual, energia_por_celda, agu
     energia_por_celda[(x, y)] = energia_restante
     camino.append(((x, y), energia_restante))
 
-    # Si la celda actual es estrella gigante, intentar destruir un agujero negro adyacente
     if [x, y] in laberinto.get('estrellasGigantes', []):
         vecinos = obtener_vecinos_adyacentes(x, y, filas, columnas)
         for vecino in vecinos:
@@ -114,10 +107,8 @@ def backtracking(laberinto, x, y, camino, energia_actual, energia_por_celda, agu
                 matriz_gasto[vecino[0]][vecino[1]] = 0
                 break
 
-    # Revisar si la posición actual es entrada de agujero de gusano
     idx_gusano, salida = obtener_salida_agujero_gusano((x, y), agujeros_gusano_act)
     if salida:
-        # Consumir agujero de gusano (removerlo)
         agujeros_gusano_act.pop(idx_gusano)
         # Seguir desde la salida, pasando el camino y energía actual (ya descontada)
         if backtracking(laberinto, salida[0], salida[1], camino, energia_restante, energia_por_celda, agujeros_negros_act.copy(), agujeros_gusano_act.copy()):
@@ -146,7 +137,6 @@ def resolver_laberinto(laberinto):
     exito = backtracking(laberinto, origen[0], origen[1], camino, energia_inicial, energia_por_celda, agujeros_negros_act, agujeros_gusano_act)
     return exito, camino
 
-# === Función: Imprimir el resultado ===
 def imprimir_resultado(encontrado, camino):
     print("¿Camino encontrado?", encontrado)
     if encontrado:

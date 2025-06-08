@@ -7,12 +7,10 @@ from SolveMaze import imprimir_resultado
 
 st.set_page_config(layout="wide")
 
-# === Cargar datos desde JSON ===
 ruta_archivo = os.path.join(os.path.dirname(__file__), 'public', 'matriz_universo.json')
 with open(ruta_archivo, 'r', encoding='utf-8') as archivo:
     datos = json.load(archivo)
-    
-    
+
 filas = datos['matriz']['filas']
 columnas = datos['matriz']['columnas']
 matriz_valores = datos["matrizInicial"]
@@ -23,14 +21,14 @@ def colocar_simbolo(x, y, simbolo):
     matriz_visual[x][y] = simbolo
     
 def imprimir_resultado_interfaz(encontrado, camino):
-    st.subheader("🔎 Resultado de la búsqueda")
+    st.subheader("Resultado de la búsqueda")
     
-    st.write("¿Camino encontrado?:", "✅ Sí" if encontrado else "❌ No")
+    st.write("¿Camino encontrado?:", "Sí" if encontrado else "No")
     
     if encontrado:
-        st.markdown("### 🧭 Pasos del camino:")
+        st.markdown("Pasos del camino:")
         for paso, energia in camino:
-            st.markdown(f"- 📍 Posición: `{paso}`, ⚡ Energía restante: `{energia}`")
+            st.markdown(f"-Posición: `{paso}`, Energía restante: `{energia}`")
     else:
         st.warning("No se encontró un camino con la energía disponible.")
 
@@ -57,7 +55,7 @@ for zona in datos["zonasRecarga"]:
 
 # === Leyenda e interfaz ===
 st.title("Visualización de la Matriz del Universo")
-st.markdown("### Leyenda:")
+st.markdown("### Significado Simbolos:")
 st.write("🛫 Origen")
 st.write("🛬 Destino")
 st.write("⚫ Agujero Negro")
@@ -126,8 +124,7 @@ if st.button("🚀 Ejecutar algoritmo con animación"):
             time.sleep(0.1)
             
         st.success("¡Ruta animada mostrada con éxito!")
-        
-        st.subheader("📍 Pasos seguidos:")
+
         imprimir_resultado_interfaz(encontrado, ruta_coords)
     else:
         st.error("No se encontró una ruta válida.")
