@@ -23,13 +23,6 @@ def obtener_movimientos():
         (-1, -1)  # diagonal superior izquierda
     ]
 
-# Función que permite aplicar recarga si hay una celda de recarga en la posición
-def recargar_energia(x, y, energia, zonas_recarga):
-    for zx, zy, factor in zonas_recarga:
-        if (x, y) == (zx, zy):
-            return energia + factor
-    return energia
-
 # Funcion que permite obtener los vecinos adyacentes de una celda
 def obtener_vecinos_adyacentes(x, y, filas, columnas):
     movimientos = obtener_movimientos()
@@ -59,7 +52,7 @@ def obtener_salida_agujero_gusano(pos, agujeros_gusano_act):
 
 
 # Función de la logica principal del backtracking
-def backtracking(laberinto, x, y, camino, energia_actual, energia_por_celda, agujeros_negros_act, estrellas_act, agujeros_gusano_act):
+def backtracking(laberinto, x, y, camino, energia_actual, energia_por_celda, agujeros_negros_act, estrellas_act, agujeros_gusano_act, zonas_recarga):
     filas = laberinto['matriz']['filas']
     columnas = laberinto['matriz']['columnas']
     destino = laberinto['destino']
@@ -87,6 +80,12 @@ def backtracking(laberinto, x, y, camino, energia_actual, energia_por_celda, agu
     if (x, y) in energia_por_celda and energia_restante <= energia_por_celda[(x, y)]:
         return False
 
+    # Si se llega a una zona de recarga, tanquear de nuevo
+    for zx, zy, recarga in zonas_recarga:
+        if (x,y) == (zx, zy):
+            energia_restante += recarga
+            break
+    
     # Guardar el mejor registro de energia en esa celda
     energia_por_celda[(x, y)] = energia_restante
     camino.append(((x, y), energia_restante))
@@ -101,7 +100,7 @@ def backtracking(laberinto, x, y, camino, energia_actual, energia_por_celda, agu
     if salida:
         agujeros_gusano_act.pop(idx_gusano)
         # Seguir desde la salida, pasando el camino y energía actual (ya descontada)
-        if backtracking(laberinto, salida[0], salida[1], camino, energia_restante, energia_por_celda, agujeros_negros_act.copy(), estrellas_act.copy(), agujeros_gusano_act.copy()):
+        if backtracking(laberinto, salida[0], salida[1], camino, energia_restante, energia_por_celda, agujeros_negros_act.copy(), estrellas_act.copy(), agujeros_gusano_act.copy(), zonas_recarga.copy()):
             return True
         # Si no funciona, deshacer el pop para esta rama
         agujeros_gusano_act.insert(idx_gusano, {'entrada': list((x,y)), 'salida': list(salida)})
@@ -112,7 +111,7 @@ def backtracking(laberinto, x, y, camino, energia_actual, energia_por_celda, agu
     
     # Moverme 
     for dx, dy in obtener_movimientos():
-        if backtracking(laberinto, x + dx, y + dy, camino, energia_restante, energia_por_celda, agujeros_negros_act.copy(), estrellas_act.copy(), agujeros_gusano_act.copy()):
+        if backtracking(laberinto, x + dx, y + dy, camino, energia_restante, energia_por_celda, agujeros_negros_act.copy(), estrellas_act.copy(), agujeros_gusano_act.copy(), zonas_recarga.copy()):
             return True
 
     # Backtracking
@@ -128,7 +127,8 @@ def resolver_laberinto(laberinto):
     agujeros_negros_act = laberinto.get('agujerosNegros', []).copy()
     agujeros_gusano_act = laberinto.get('agujerosGusano', []).copy()
     estrellas_act = laberinto.get('estrellasGigantes', []).copy()
-    exito = backtracking(laberinto, origen[0], origen[1], camino, energia_inicial, energia_por_celda, agujeros_negros_act, estrellas_act, agujeros_gusano_act)
+    zonas_recarga = laberinto.get('zonasRecarga', []).copy()
+    exito = backtracking(laberinto, origen[0], origen[1], camino, energia_inicial, energia_por_celda, agujeros_negros_act, estrellas_act, agujeros_gusano_act, zonas_recarga)
     return exito, camino
 
 def imprimir_resultado(encontrado, camino):
