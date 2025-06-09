@@ -41,30 +41,16 @@ def obtener_vecinos_adyacentes(x, y, filas, columnas):
     return vecinos
 
 # Funcion que permite destruir un agujero negro si estamos en una estrellaGigante
-def destruir_agujero_negro(laberinto):
-    filas = laberinto['matriz']['filas']
-    columnas = laberinto['matriz']['columnas']
-    matriz_gasto = laberinto['matrizInicial']
-    agujeros_negros = laberinto['agujerosNegros']
-    estrellas = laberinto['estrellasGigantes']
-
-    # Convertimos agujeros a conjunto para fácil eliminación
-    agujeros_set = set(tuple(a) for a in agujeros_negros)
-
-    for estrella in estrellas:
-        vecinos = obtener_vecinos_adyacentes(estrella[0], estrella[1], filas, columnas)
-        for vecino in vecinos:
-            if vecino in agujeros_set:
-                # Destruir agujero negro: lo removemos del set
-                agujeros_set.remove(vecino)
-                # Actualizar matriz gasto para que sea 0 (sin gasto, libre)
-                matriz_gasto[vecino[0]][vecino[1]] = 0
-                break  # solo destruye uno por estrella
-
-    # Actualizar la lista original en laberinto
-    laberinto['agujerosNegros'] = [list(pos) for pos in agujeros_set]
+def destruir_agujero_negro_en(x, y, matriz_gasto, agujeros_negros_act, filas, columnas):
+    vecinos = obtener_vecinos_adyacentes(x, y, filas, columnas)
+    for vecino in vecinos:
+        if list(vecino) in agujeros_negros_act:
+            agujeros_negros_act.remove(list(vecino))
+            matriz_gasto[vecino[0]][vecino[1]] = 0
+            break
 
 
+# Detecta si estamos en un agujero gusano y nos devuelve la salida
 def obtener_salida_agujero_gusano(pos, agujeros_gusano_act):
     for i, agujero in enumerate(agujeros_gusano_act):
         if agujero['entrada'] == list(pos):
@@ -79,34 +65,38 @@ def backtracking(laberinto, x, y, camino, energia_actual, energia_por_celda, agu
     destino = laberinto['destino']
     matriz_gasto = laberinto['matrizInicial']
 
+    # Verificar limite
     if not es_valido(x, y, filas, columnas):
         return False
 
+    # Si ya paso por esa celda, regrese
     if (x, y) in [pos for pos, _ in camino]:
         return False
 
+    # Si es un agujero negro, regrese
     if [x, y] in agujeros_negros_act:
         return False
 
+    # Mirar la energia que se gasto en esa celda
     gasto = matriz_gasto[x][y]
     energia_restante = energia_actual - gasto
     if energia_restante < 0:
         return False
 
+    # Si ya se habia llegado a esta celda con una energia menor, regrese
     if (x, y) in energia_por_celda and energia_restante <= energia_por_celda[(x, y)]:
         return False
 
+    # Guardar el mejor registro de energia en esa celda
     energia_por_celda[(x, y)] = energia_restante
     camino.append(((x, y), energia_restante))
 
+    # Si esta en una estrella gigante, mirar si es posible eliminar un agujero negro
     if [x, y] in laberinto.get('estrellasGigantes', []):
-        vecinos = obtener_vecinos_adyacentes(x, y, filas, columnas)
-        for vecino in vecinos:
-            if list(vecino) in agujeros_negros_act:
-                agujeros_negros_act.remove(list(vecino))
-                matriz_gasto[vecino[0]][vecino[1]] = 0
-                break
+        destruir_agujero_negro_en(x, y, matriz_gasto, agujeros_negros_act, filas, columnas)
 
+
+    # Verificar si estamos en una posicion de agujero gusano, obtener la salida
     idx_gusano, salida = obtener_salida_agujero_gusano((x, y), agujeros_gusano_act)
     if salida:
         agujeros_gusano_act.pop(idx_gusano)
@@ -116,13 +106,16 @@ def backtracking(laberinto, x, y, camino, energia_actual, energia_por_celda, agu
         # Si no funciona, deshacer el pop para esta rama
         agujeros_gusano_act.insert(idx_gusano, {'entrada': list((x,y)), 'salida': list(salida)})
 
+    # Solucion
     if [x, y] == destino:
         return True
-
+    
+    # Moverme 
     for dx, dy in obtener_movimientos():
         if backtracking(laberinto, x + dx, y + dy, camino, energia_restante, energia_por_celda, agujeros_negros_act.copy(), agujeros_gusano_act.copy()):
             return True
 
+    # Backtracking
     camino.pop()
     return False
 
