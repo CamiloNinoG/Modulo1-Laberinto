@@ -100,7 +100,7 @@ def backtracking(laberinto, x, y, camino, energia_actual, energia_por_celda, agu
     if salida:
         agujeros_gusano_act.pop(idx_gusano)
         # Seguir desde la salida, pasando el camino y energía actual (ya descontada)
-        if backtracking(laberinto, salida[0], salida[1], camino, energia_restante, energia_por_celda, agujeros_negros_act.copy(), estrellas_act.copy(), agujeros_gusano_act.copy(), zonas_recarga.copy()):
+        if backtracking(laberinto, salida[0], salida[1], camino, energia_restante, energia_por_celda, agujeros_negros_act.copy(), estrellas_act.copy(), agujeros_gusano_act.copy(), zonas_recarga):
             return True
         # Si no funciona, deshacer el pop para esta rama
         agujeros_gusano_act.insert(idx_gusano, {'entrada': list((x,y)), 'salida': list(salida)})
@@ -111,7 +111,7 @@ def backtracking(laberinto, x, y, camino, energia_actual, energia_por_celda, agu
     
     # Moverme 
     for dx, dy in obtener_movimientos():
-        if backtracking(laberinto, x + dx, y + dy, camino, energia_restante, energia_por_celda, agujeros_negros_act.copy(), estrellas_act.copy(), agujeros_gusano_act.copy(), zonas_recarga.copy()):
+        if backtracking(laberinto, x + dx, y + dy, camino, energia_restante, energia_por_celda, agujeros_negros_act.copy(), estrellas_act.copy(), agujeros_gusano_act.copy(), zonas_recarga):
             return True
 
     # Backtracking
