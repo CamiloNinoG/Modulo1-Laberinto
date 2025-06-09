@@ -59,7 +59,7 @@ def obtener_salida_agujero_gusano(pos, agujeros_gusano_act):
 
 
 # Función de la logica principal del backtracking
-def backtracking(laberinto, x, y, camino, energia_actual, energia_por_celda, agujeros_negros_act, agujeros_gusano_act):
+def backtracking(laberinto, x, y, camino, energia_actual, energia_por_celda, agujeros_negros_act, estrellas_act, agujeros_gusano_act):
     filas = laberinto['matriz']['filas']
     columnas = laberinto['matriz']['columnas']
     destino = laberinto['destino']
@@ -92,7 +92,7 @@ def backtracking(laberinto, x, y, camino, energia_actual, energia_por_celda, agu
     camino.append(((x, y), energia_restante))
 
     # Si esta en una estrella gigante, mirar si es posible eliminar un agujero negro
-    if [x, y] in laberinto.get('estrellasGigantes', []):
+    if [x, y] in estrellas_act:
         destruir_agujero_negro_en(x, y, matriz_gasto, agujeros_negros_act, filas, columnas)
 
 
@@ -101,7 +101,7 @@ def backtracking(laberinto, x, y, camino, energia_actual, energia_por_celda, agu
     if salida:
         agujeros_gusano_act.pop(idx_gusano)
         # Seguir desde la salida, pasando el camino y energía actual (ya descontada)
-        if backtracking(laberinto, salida[0], salida[1], camino, energia_restante, energia_por_celda, agujeros_negros_act.copy(), agujeros_gusano_act.copy()):
+        if backtracking(laberinto, salida[0], salida[1], camino, energia_restante, energia_por_celda, agujeros_negros_act.copy(), estrellas_act.copy(), agujeros_gusano_act.copy()):
             return True
         # Si no funciona, deshacer el pop para esta rama
         agujeros_gusano_act.insert(idx_gusano, {'entrada': list((x,y)), 'salida': list(salida)})
@@ -112,7 +112,7 @@ def backtracking(laberinto, x, y, camino, energia_actual, energia_por_celda, agu
     
     # Moverme 
     for dx, dy in obtener_movimientos():
-        if backtracking(laberinto, x + dx, y + dy, camino, energia_restante, energia_por_celda, agujeros_negros_act.copy(), agujeros_gusano_act.copy()):
+        if backtracking(laberinto, x + dx, y + dy, camino, energia_restante, energia_por_celda, agujeros_negros_act.copy(), estrellas_act.copy(), agujeros_gusano_act.copy()):
             return True
 
     # Backtracking
@@ -127,7 +127,8 @@ def resolver_laberinto(laberinto):
     energia_por_celda = {}
     agujeros_negros_act = laberinto.get('agujerosNegros', []).copy()
     agujeros_gusano_act = laberinto.get('agujerosGusano', []).copy()
-    exito = backtracking(laberinto, origen[0], origen[1], camino, energia_inicial, energia_por_celda, agujeros_negros_act, agujeros_gusano_act)
+    estrellas_act = laberinto.get('estrellasGigantes', []).copy()
+    exito = backtracking(laberinto, origen[0], origen[1], camino, energia_inicial, energia_por_celda, agujeros_negros_act, estrellas_act, agujeros_gusano_act)
     return exito, camino
 
 def imprimir_resultado(encontrado, camino):
